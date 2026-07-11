@@ -8,4 +8,4 @@ WITH stats AS (
 
 SELECT *, CASE WHEN  mismatches / total_orders > 0.3 THEN 'FAILED' ELSE 'PASSED' END AS STATUS
 FROM stats
-WHERE mismatches / total_orders > 0.3   -- 30% threshold
+WHERE mismatches / NULLIF(total_orders,0) > 0.3   -- 30% threshold
