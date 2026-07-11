@@ -1,0 +1,14 @@
+sources:
+  - name: raw
+    schema: raw  
+    database: '{{ target.catalog }}'
+    description: "Raw ingested data from source systems with no transformations applied. Data auto generated using sql"
+    config:
+      freshness:
+        warn_after: {count: 1, period: day}
+        error_after: {count: 2, period: day}
+    tables:
+      - name: orders
+      - name: products
+      - name: payments
+      - name: customers

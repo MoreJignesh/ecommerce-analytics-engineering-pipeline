@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: kpi_orders
+    columns:
+      - name: total_orders
+        tests:
+          - not_null
+
+      - name: total_revenue
+        tests:
+          - not_null
+
+  - name: kpi_customers
+  - name: kpi_payments
+  - name: obt_orders
+  - name: kpi_data_quality

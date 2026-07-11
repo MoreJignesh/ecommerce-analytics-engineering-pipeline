@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: "Customer dimension table (SCD Type 2 if snapshot is used)."
+
+    columns:
+      - name: customer_id
+        tests:
+          - unique:
+              config:
+                severity: error
+      - name: customer_name
+      - name: email
+      - name: city
+      - name: country
+      - name: signup_date
+
+      - name: dbt_valid_from
+        description: "Record start timestamp (SCD2)."
+
+      - name: dbt_valid_to
+        description: "Record end timestamp (SCD2)."
+
+      - name: is_current
+        description: "Flag indicating current active record."
+
+  - name: dim_products
+    description: "Product dimension table."
+
+    columns:
+      - name: product_id
+        tests:
+          - unique:
+              config:
+                severity: error
+      - name: product_name
+      - name: category
+      - name: price
+
+  - name: fact_orders
+    description: "Fact table containing order, payment, and reconciliation details."
+
+    columns:
+      - name: order_id
+        tests:
+          - unique:
+              config:
+                severity: error
+
+      - name: customer_id
+      - name: product_id
+
+      - name: order_amount
+      - name: paid_amount
+
+      - name: payment_status
+
+      - name: payment_status_check
+        description: "Reconciliation status between order and payment."
+
+      - name: payment_variance
+        description: "Difference between paid amount and order amount."
+
+      - name: created_at

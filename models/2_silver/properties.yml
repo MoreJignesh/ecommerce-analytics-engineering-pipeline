@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  - name: s_products
+    description: "Cleaned product data with normalized category and parsed price."
+    columns: 
+      - name: product_id
+        description: "Cleaned product_id data"
+        tests:
+          - unique:
+              config:
+                severity: error
+
+      - name: category
+        tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: product_name
+      - name: price
+      - name: updated_at
+
+  - name: s_payments
+    description: "Cleaned payments data with standardized status and numeric paid amount."
+    columns: 
+      - name: payment_id
+        tests:
+          - unique:
+              config:
+                severity: error
+
+      - name: order_id
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - relationships:
+              arguments:
+                to: ref('s_orders')
+                field: order_id
+
+      - name: payment_status
+      - name: paid_amount
+      - name: processed_at
+
+  - name: s_orders
+    description: "Cleaned orders data with standardized status and numeric order amount."
+    columns: 
+      - name: order_id
+        tests:
+          - unique:
+              config:
+                severity: error
+
+
+      - name: product_id
+        tests:
+          - unique:
+              config:
+                severity: warn
+
+          - relationships:
+              arguments:
+                to: ref('s_products')
+                field: product_id
+      - name: order_status
+        tests:
+          - accepted_values:
+              arguments: 
+                values: ['PLACED', 'SHIPPED', 'CANCELLED', 'UNKNOWN']
+                config:
+                  severity: warn
+
+      - name: customer_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('s_customers')
+                field: customer_id
+      - name: order_amount
+      - name: created_at
+      - name: updated_at
+
+  - name: s_customers
+    description: "Cleaned and deduplicated customer data with standardized fields and data quality flags."
+
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier."
+        tests:
+          - unique:
+              config:
+                severity: warn
+
+      - name: customer_name
+        description: "Standardized customer name (trimmed and formatted)."
+
+      - name: email
+        description: "Normalized email (lowercase, trimmed)."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: city
+        description: "Standardized city name."
+
+      - name: country
+        description: "Standardized country code (uppercase)."
+
+      - name: signup_date
+        description: "Customer signup date."
+
+      - name: updated_at
+        description: "Latest update timestamp."
+
+      - name: is_invalid_email
+        description: "Flag indicating invalid email format (1 = invalid)."
+
+      - name: is_invalid_name
+        description: "Flag indicating missing or invalid name."
+
+
