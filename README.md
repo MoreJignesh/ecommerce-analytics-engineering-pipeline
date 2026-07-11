@@ -26,33 +26,322 @@ The project uses dbt for:
 
 ---
 
-# Architecture
+# Data Architecture
+
+The project follows a **Medallion Architecture** pattern using dbt and Databricks.
+
+```text
+                         Databricks Platform
+                                |
+                                |
+                         RAW Source Tables
+                                |
+          -----------------------------------------------
+          |              |              |               |
+      customers       orders        products       payments
+          |
+          v
+
+                  dbt Source Layer
+                     (0_source)
+
+              source('raw', table_name)
+
+                                |
+                                v
+
+                    Bronze Layer (Views)
+                     models/1_bronze
+
+          -----------------------------------------------
+          |              |              |               |
+    b_customers     b_orders     b_products      b_payments
+
+          Purpose:
+          - Preserve source structure
+          - Apply light transformations
+          - Prepare data for cleansing
+
+
+                                |
+                                v
+
+                    Silver Layer (Tables)
+                     models/2_silver
+
+          -----------------------------------------------
+          |              |              |               |
+    s_customers     s_orders     s_products      s_payments
+
+          Purpose:
+          - Data cleaning
+          - Standardization
+          - Business rules
+          - Data quality improvements
+
+
+                                |
+                                v
+
+                     Gold Layer (Tables)
+                      models/3_gold
+
+          -------------------------------------------------
+          |              |              |                 |
+   dim_customers   dim_products    dim_date        fact_orders
+                                                     |
+                                                     |
+                                              fact_payments
+                                                     |
+                                                     |
+                                          bridge_orders_payment
+
+          Purpose:
+          - Dimensional modeling
+          - Fact and dimension tables
+          - Analytics-ready datasets
+
+
+                                |
+                                v
+
+                     KPI Layer (Tables)
+                      models/4_kpi
+
+          -------------------------------------------------
+          |              |              |                 |
+    kpi_customer   kpi_orders   kpi_payment   kpi_data_quality
+
+                                |
+                                v
+
+                         OBT Layer
+
+                       obt_orders
+
+                                |
+                                v
+
+                    BI Consumption Layer
+
+                 Power BI / Looker Studio
+```
+
+# dbt Model Structure
+
+## Source Layer
+
+Location:
 
 ```
-Raw Databricks Tables
-          |
-          v
-     Source Layer
-          |
-          v
-       Bronze
- (Light transformations)
-          |
-          v
-       Silver
-(Cleansing and standardization)
-          |
-          v
-        Gold
-(Dimension and Fact Models)
-          |
-          v
-        KPI
-(Business Metrics Layer)
-          |
-          v
-Power BI / Looker Studio
+models/0_source
 ```
+
+Source definitions are maintained in:
+
+```
+sources.yml
+```
+
+Raw source tables:
+
+| Source Table |
+| ------------ |
+| customers    |
+| orders       |
+| products     |
+| payments     |
+
+The source layer provides:
+
+* Metadata management
+* Source documentation
+* Freshness monitoring
+* Data lineage tracking
+
+---
+
+# Bronze Layer
+
+Location:
+
+```
+models/1_bronze
+```
+
+Materialization:
+
+```
+View
+```
+
+Models:
+
+| Bronze Model | Description                      |
+| ------------ | -------------------------------- |
+| b_customers  | Raw customer data representation |
+| b_orders     | Raw order transaction data       |
+| b_products   | Raw product information          |
+| b_payments   | Raw payment transaction data     |
+
+Responsibilities:
+
+* Minimal transformation
+* Preserve source structure
+* Prepare raw data for cleaning
+
+---
+
+# Silver Layer
+
+Location:
+
+```
+models/2_silver
+```
+
+Materialization:
+
+```
+Table
+```
+
+Models:
+
+| Silver Model | Purpose                         |
+| ------------ | ------------------------------- |
+| s_customers  | Cleaned customer information    |
+| s_orders     | Standardized order transactions |
+| s_products   | Cleaned product attributes      |
+| s_payments   | Standardized payment records    |
+
+Responsibilities:
+
+* Remove inconsistencies
+* Standardize formats
+* Apply business rules
+* Improve data quality
+
+---
+
+# Gold Layer
+
+Location:
+
+```
+models/3_gold
+```
+
+Materialization:
+
+```
+Table
+```
+
+Models:
+
+| Model                 | Type      | Purpose                    |
+| --------------------- | --------- | -------------------------- |
+| dim_customers         | Dimension | Customer analytics         |
+| dim_products          | Dimension | Product analytics          |
+| dim_date              | Dimension | Date-based analysis        |
+| fact_orders           | Fact      | Order-level metrics        |
+| fact_payments         | Fact      | Payment-level metrics      |
+| bridge_orders_payment | Bridge    | Order-payment relationship |
+
+The Gold layer follows dimensional modeling principles and provides analytics-ready datasets.
+
+---
+
+# KPI Layer
+
+Location:
+
+```
+models/4_kpi
+```
+
+Models:
+
+| Model            | Purpose                            |
+| ---------------- | ---------------------------------- |
+| kpi_customer     | Customer metrics                   |
+| kpi_orders       | Order metrics                      |
+| kpi_payment      | Payment metrics                    |
+| kpi_data_quality | Data quality monitoring            |
+| obt_orders       | Dashboard-ready denormalized table |
+
+The KPI layer is optimized for BI tools and self-service analytics.
+
+
+# Key Data Models
+
+## Order Processing Pipeline
+
+The order lifecycle flows through multiple layers:
+
+```text
+raw.orders
+    |
+    v
+b_orders
+(Bronze - raw representation)
+    |
+    v
+s_orders
+(Silver - cleaned and deduplicated)
+    |
+    v
+fact_orders
+(Gold - business transaction model)
+    |
+    +----------------+
+    |                |
+    v                v
+kpi_orders       obt_orders
+(Business       (BI-ready
+ metrics)       dataset)
+```
+
+---
+
+## Silver Transformation Logic
+
+The `s_orders` model performs:
+
+* Order status standardization
+* Amount field cleansing
+* Duplicate removal
+* Incremental processing using `updated_at`
+* Latest record selection using window functions
+
+---
+
+## Gold Business Logic
+
+The `fact_orders` model creates:
+
+* Payment validation checks
+* Payment variance calculations
+* Order severity classification
+* Customer order ranking
+* Repeat customer identification
+* Customer purchase intervals
+
+---
+
+## BI Consumption
+
+The `obt_orders` model provides a flattened analytics table containing:
+
+* Customer attributes
+* Product attributes
+* Order details
+* Payment information
+* Date attributes
+* Customer behavior metrics
+
+This model is designed for self-service analytics tools such as Power BI and Looker Studio.
 
 ---
 
@@ -68,6 +357,8 @@ Power BI / Looker Studio
 | uv                       | Dependency management                 |
 | Jinja                    | Dynamic SQL generation                |
 | Power BI / Looker Studio | Data visualization                    |
+
+
 
 ---
 
