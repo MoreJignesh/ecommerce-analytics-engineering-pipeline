@@ -1,6 +1,31 @@
 
 # E-commerce Analytics Engineering Pipeline
 
+# Business Problem
+
+E-commerce businesses generate data from multiple operational systems such as orders, customers, products, and payments.
+
+However, raw transactional data often contains:
+
+- inconsistent formatting
+- duplicate records
+- missing values
+- payment inconsistencies
+- non-standardized business attributes
+
+This project builds an analytics engineering pipeline that transforms raw operational data into trusted analytical datasets for reporting, KPI tracking, and self-service BI analytics.
+
+# Project Goals
+
+The main objectives of this project are:
+
+- Build an end-to-end ELT pipeline using dbt and Databricks
+- Implement medallion architecture for scalable transformations
+- Apply dimensional modeling principles
+- Create reusable analytics models
+- Implement automated data quality checks
+- Generate BI-ready datasets
+
 ## Project Overview
 
 This project demonstrates an end-to-end analytics engineering pipeline built using **Databricks and dbt**.
@@ -345,6 +370,17 @@ This model is designed for self-service analytics tools such as Power BI and Loo
 
 ---
 
+## Materialization Strategy
+
+| Layer | Materialization | Reason |
+|---|---|---|
+| Bronze | View | Lightweight representation of source data |
+| Silver | Incremental Table | Process only new/updated records |
+| Gold | Incremental Table | Optimize large analytical models |
+| KPI | Table | Optimized for reporting |
+
+---
+
 # Technology Stack
 
 | Technology               | Purpose                               |
@@ -352,122 +388,165 @@ This model is designed for self-service analytics tools such as Power BI and Loo
 | Databricks               | Cloud data platform and SQL warehouse |
 | dbt Core                 | Data transformation framework         |
 | dbt Databricks Adapter   | Databricks connectivity               |
-| Apache Iceberg           | Table format                          |
+| Apache Iceberg           | Managed table format                  |
 | Python                   | Project environment management        |
 | uv                       | Dependency management                 |
 | Jinja                    | Dynamic SQL generation                |
 | Power BI / Looker Studio | Data visualization                    |
 
 
-
 ---
 
-# Data Flow
+## Quality Checks Implemented
 
-## Source Layer
+### 1. Payment Mismatch Detection
 
-The source layer defines raw Databricks tables using dbt sources.
+Test:
 
-Source tables:
-
-* customers
-* products
-* orders
-* payments
-
-The source layer provides:
-
-* Metadata management
-* Data lineage
-* Freshness monitoring
-
----
-
-## Bronze Layer
+```
+payment_mismatch_anomaly.sql
+```
 
 Purpose:
 
-Create a lightly transformed representation of raw data.
+Identifies individual orders where payment amounts do not match order amounts.
 
-Responsibilities:
+The test detects:
 
-* Read raw source tables
-* Preserve source structure
-* Apply minimal transformations
-* Prepare data for downstream processing
+* Underpayments
+* Overpayments
+* Missing payment values
+* Payment processing inconsistencies
 
-Models:
-
-* b_customers
-* b_products
-* b_orders
-* b_payments
-
-Materialization:
+The validation is performed against the Gold layer:
 
 ```
-Views
+fact_orders
 ```
 
 ---
 
-## Silver Layer
+### 2. Payment Mismatch Threshold Monitoring
+
+Test:
+
+```
+payment_mismatch_threshold.sql
+```
 
 Purpose:
 
-Clean and standardize data.
+Monitors overall payment quality across the dataset.
 
-Responsibilities:
-
-* Remove duplicates
-* Handle missing values
-* Standardize formats
-* Apply business rules
-* Prepare analytics-ready datasets
-
-Materialization:
+Business rule:
 
 ```
-Tables
+Payment mismatches should be below 30% of total orders
 ```
+
+If mismatches exceed the threshold, the dbt test fails and indicates a potential upstream data issue.
 
 ---
 
-## Gold Layer
+### 3. Revenue Validation
+
+Test:
+
+```
+kpi_revenue_non_negative.sql
+```
 
 Purpose:
 
-Create business-oriented analytical models.
+Ensures revenue metrics remain valid.
 
-Responsibilities:
-
-* Build fact tables
-* Build dimension tables
-* Apply business logic
-* Optimize reporting queries
-
-Materialization:
+Rule:
 
 ```
-Tables
+total_revenue >= 0
 ```
+
+This protects downstream dashboards from displaying incorrect financial metrics.
+
+# Engineering Decisions
+
+## Incremental Processing
+
+Large transactional tables are implemented using dbt incremental models.
+
+Example:
+
+- s_orders
+- fact_orders
+
+Incremental loading uses updated timestamps to process only changed records.
+
+Benefits:
+
+- Reduced compute cost
+- Faster execution
+- Scalable processing
+
+
+## Deduplication Strategy
+
+The pipeline uses window functions:
+
+ROW_NUMBER()
+
+to identify the latest version of records based on updated timestamps.
+
+
+## Dimensional Modeling
+
+The Gold layer follows a star schema approach:
+
+Fact Tables:
+
+- fact_orders
+- fact_payments
+
+
+Dimension Tables:
+
+- dim_customers
+- dim_products
+- dim_date
 
 ---
 
-## KPI Layer
+## Data Quality Flow
 
-Purpose:
+```
+Raw Data
+   |
+   v
+Bronze
+   |
+   v
+Silver
+   |
+   v
+Gold
+   |
+   v
+Data Quality Tests
+   |
+   v
+KPI / BI Reporting
+```
 
-Create aggregated business metrics.
+```
+dbt build
+    |
+    +-- Models
+    |
+    +-- Tests
+    |
+    +-- Documentation
+```
 
-Examples:
-
-* Revenue metrics
-* Customer metrics
-* Sales performance
-* Order analysis
-
-These models are designed for dashboard consumption.
+This ensures only validated data reaches analytics consumers.
 
 ---
 
@@ -598,3 +677,9 @@ Potential enhancements:
 * Add more comprehensive data quality monitoring
 * Add dashboard screenshots
 
+# Current Limitations
+
+- Pipeline currently runs locally using dbt Core
+- Deployment automation is not implemented
+- Source ingestion is simulated using Databricks raw tables
+- Monitoring is implemented through dbt tests but not external alerting
