@@ -664,6 +664,14 @@ Examples:
 * Validating relationships between tables
 * Detecting payment inconsistencies
 
+
+# Current Limitations
+
+- Pipeline currently runs locally using dbt Core
+- Deployment automation is not implemented
+- Source ingestion is simulated using Databricks raw tables
+- Monitoring is implemented through dbt tests but not external alerting
+
 ---
 
 # Future Improvements
@@ -675,10 +683,3 @@ Potential enhancements:
 * Add incremental models for large datasets
 * Add more comprehensive data quality monitoring
 * Add dashboard screenshots
-
-# Current Limitations
-
-- Pipeline currently runs locally using dbt Core
-- Deployment automation is not implemented
-- Source ingestion is simulated using Databricks raw tables
-- Monitoring is implemented through dbt tests but not external alerting
