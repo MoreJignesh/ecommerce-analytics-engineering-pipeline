@@ -1,31 +1,6 @@
 
 # E-commerce Analytics Engineering Pipeline
 
-# Business Problem
-
-E-commerce businesses generate data from multiple operational systems such as orders, customers, products, and payments.
-
-However, raw transactional data often contains:
-
-- inconsistent formatting
-- duplicate records
-- missing values
-- payment inconsistencies
-- non-standardized business attributes
-
-This project builds an analytics engineering pipeline that transforms raw operational data into trusted analytical datasets for reporting, KPI tracking, and self-service BI analytics.
-
-# Project Goals
-
-The main objectives of this project are:
-
-- Build an end-to-end ELT pipeline using dbt and Databricks
-- Implement medallion architecture for scalable transformations
-- Apply dimensional modeling principles
-- Create reusable analytics models
-- Implement automated data quality checks
-- Generate BI-ready datasets
-
 ## Project Overview
 
 This project demonstrates an end-to-end analytics engineering pipeline built using **Databricks and dbt**.
@@ -49,9 +24,49 @@ The project uses dbt for:
 * Documentation generation
 * Dependency management
 
+## Business Problem
+
+E-commerce businesses generate data from multiple operational systems such as orders, customers, products, and payments.
+
+However, raw transactional data often contains:
+
+- inconsistent formatting
+- duplicate records
+- missing values
+- payment inconsistencies
+- non-standardized business attributes
+
+This project builds an analytics engineering pipeline that transforms raw operational data into trusted analytical datasets for reporting, KPI tracking, and self-service BI analytics.
+
+## Project Goals
+
+The main objectives of this project are:
+
+- Build an end-to-end ELT pipeline using dbt and Databricks
+- Implement medallion architecture for scalable transformations
+- Apply dimensional modeling principles
+- Create reusable analytics models
+- Implement automated data quality checks
+- Generate BI-ready datasets
+
 ---
 
-# Data Architecture
+## Technology Stack
+
+| Technology               | Purpose                               |
+| ------------------------ | ------------------------------------- |
+| Databricks               | Cloud data platform and SQL warehouse |
+| dbt Core                 | Data transformation framework         |
+| dbt Databricks Adapter   | Databricks connectivity               |
+| Apache Iceberg           | Managed table format                  |
+| Python                   | Project environment management        |
+| uv                       | Dependency management                 |
+| Jinja                    | Dynamic SQL generation                |
+| Power BI / Looker Studio | Data visualization                    |
+
+---
+
+## Data Architecture
 
 The project follows a **Medallion Architecture** pattern using dbt and Databricks.
 
@@ -152,9 +167,9 @@ The project follows a **Medallion Architecture** pattern using dbt and Databrick
                  Power BI / Looker Studio
 ```
 
-# dbt Model Structure
+## dbt Model Structure
 
-## Source Layer
+### Source Layer
 
 Location:
 
@@ -186,7 +201,7 @@ The source layer provides:
 
 ---
 
-# Bronze Layer
+### Bronze Layer
 
 Location:
 
@@ -217,7 +232,7 @@ Responsibilities:
 
 ---
 
-# Silver Layer
+### Silver Layer
 
 Location:
 
@@ -249,7 +264,7 @@ Responsibilities:
 
 ---
 
-# Gold Layer
+### Gold Layer
 
 Location:
 
@@ -278,7 +293,7 @@ The Gold layer follows dimensional modeling principles and provides analytics-re
 
 ---
 
-# KPI Layer
+### KPI Layer
 
 Location:
 
@@ -299,9 +314,9 @@ Models:
 The KPI layer is optimized for BI tools and self-service analytics.
 
 
-# Key Data Models
+## Key Data Models
 
-## Order Processing Pipeline
+### Order Processing Pipeline
 
 The order lifecycle flows through multiple layers:
 
@@ -330,7 +345,7 @@ kpi_orders       obt_orders
 
 ---
 
-## Silver Transformation Logic
+### Silver Transformation Logic
 
 The `s_orders` model performs:
 
@@ -342,7 +357,7 @@ The `s_orders` model performs:
 
 ---
 
-## Gold Business Logic
+### Gold Business Logic
 
 The `fact_orders` model creates:
 
@@ -355,7 +370,7 @@ The `fact_orders` model creates:
 
 ---
 
-## BI Consumption
+### BI Consumption
 
 The `obt_orders` model provides a flattened analytics table containing:
 
@@ -378,22 +393,6 @@ This model is designed for self-service analytics tools such as Power BI and Loo
 | Silver | Incremental Table | Process only new/updated records |
 | Gold | Incremental Table | Optimize large analytical models |
 | KPI | Table | Optimized for reporting |
-
----
-
-# Technology Stack
-
-| Technology               | Purpose                               |
-| ------------------------ | ------------------------------------- |
-| Databricks               | Cloud data platform and SQL warehouse |
-| dbt Core                 | Data transformation framework         |
-| dbt Databricks Adapter   | Databricks connectivity               |
-| Apache Iceberg           | Managed table format                  |
-| Python                   | Project environment management        |
-| uv                       | Dependency management                 |
-| Jinja                    | Dynamic SQL generation                |
-| Power BI / Looker Studio | Data visualization                    |
-
 
 ---
 
